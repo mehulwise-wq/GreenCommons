@@ -8,8 +8,8 @@
 
   /* ---------- 1. Splash ---------- */
   GC.screens.splash = () => ({
-    title: 'GreenCommons', noBar: true, full: true,
-    html: '<div class="splash">' + GC.logoSvg(88) + '<div class="name">GreenCommons</div><p class="mid">Small habits, shared impact.</p><div class="line"><i></i></div></div>',
+    title: 'GreenAura', noBar: true, full: true,
+    html: '<div class="splash">' + GC.logoSvg(88) + '<div class="name">GreenAura</div><p class="mid">Small habits, shared impact.</p><div class="line"><i></i></div></div>',
     mount() {
       setTimeout(() => {
         if (here() !== 'splash') return;
@@ -65,7 +65,7 @@
   GC.screens.onboarding = (mode) => {
     slide = 0;
     return {
-      title: 'GreenCommons', noBar: true, full: true,
+      title: 'GreenAura', noBar: true, full: true,
       html: '<div class="onb" id="onb"></div>',
       mount() { drawSlide(mode); }
     };
@@ -125,7 +125,7 @@
   GC.act['to-login'] = () => { GC.sheet.close(true); GC.go('/login'); };
   GC.act['show-terms'] = (el, e) => {
     e.preventDefault();
-    GC.sheet.open({ title: 'Terms and Privacy', html: '<p class="mid">GreenCommons is a prototype. Your details are kept on this device only, and nothing is sent to a server. Points, rankings and vouchers are simulated. This is a habit score, not a financial credit score, and it is never shared with banks.</p><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>' });
+    GC.sheet.open({ title: 'Terms and Privacy', html: '<p class="mid">GreenAura is a prototype. Your details are kept on this device only, and nothing is sent to a server. Points, rankings and vouchers are simulated. This is a habit score, not a financial credit score, and it is never shared with banks.</p><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>' });
   };
 
   /* ---------- 5. OTP (simulated) ---------- */
@@ -321,8 +321,8 @@
   GC.screens.lock = () => {
     pin = '';
     return {
-      title: 'GreenCommons', noBar: true, full: true,
-      html: '<div class="splash" style="justify-content:flex-start;padding-top:56px">' + GC.logoSvg(64) + '<h2 class="heading mt">App locked</h2><p class="mid">Enter your PIN to open GreenCommons.</p><div id="pin-area" style="width:100%">' + pinHtml() + '</div><div id="lg-msg"></div><button class="btn" style="min-width:220px" id="unlock-btn" data-act="unlock" disabled>Unlock</button><button class="btn text mt" data-act="lock-logout">' + t('Log out') + '</button></div>'
+      title: 'GreenAura', noBar: true, full: true,
+      html: '<div class="splash" style="justify-content:flex-start;padding-top:56px">' + GC.logoSvg(64) + '<h2 class="heading mt">App locked</h2><p class="mid">Enter your PIN to open GreenAura.</p><div id="pin-area" style="width:100%">' + pinHtml() + '</div><div id="lg-msg"></div><button class="btn" style="min-width:220px" id="unlock-btn" data-act="unlock" disabled>Unlock</button><button class="btn text mt" data-act="lock-logout">' + t('Log out') + '</button></div>'
     };
   };
   GC.act['unlock'] = () => {

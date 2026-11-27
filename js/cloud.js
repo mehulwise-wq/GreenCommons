@@ -1,4 +1,4 @@
-/* GreenCommons online layer (Supabase). Does nothing unless js/config.js is filled in.
+/* GreenAura online layer (Supabase). Does nothing unless js/config.js is filled in.
    The phone keeps working offline; changes wait in an outbox and are sent when the network is back.
    The server re-checks every rule, so its answer wins over anything stored on the phone. */
 (function () {

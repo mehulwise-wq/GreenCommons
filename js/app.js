@@ -37,7 +37,7 @@
     view.className = 'view' + (out.full ? ' full' : '');
     view.innerHTML = out.html;
     view.scrollTop = 0;
-    view.setAttribute('aria-label', out.title || 'GreenCommons');
+    view.setAttribute('aria-label', out.title || 'GreenAura');
 
     // top bar
     const bar = $('#topbar');
@@ -72,7 +72,7 @@
         '<div class="btn-row"><button class="btn outline" data-act="level-email">Email me this</button><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>'
     });
   };
-  GC.act['level-email'] = () => { const u = GC.user(); GC.mail('GreenCommons level reached', 'Hello ' + u.name + ',\n\nYou reached a new level. Your Green Credit is ' + GC.util.num(GC.totals(u).score) + '.\n\nThis is a habit score, not a financial credit score.\n\nGreenCommons (prototype)'); };
+  GC.act['level-email'] = () => { const u = GC.user(); GC.mail('GreenAura level reached', 'Hello ' + u.name + ',\n\nYou reached a new level. Your Green Credit is ' + GC.util.num(GC.totals(u).score) + '.\n\nThis is a habit score, not a financial credit score.\n\nGreenAura (prototype)'); };
   GC.afterAction = () => { GC.flushNotices(); GC.checkLevelUp(); };
 
   function updateOffline() {
@@ -86,10 +86,10 @@
   // install prompt (Chrome)
   GC.installEvent = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); GC.installEvent = e; });
-  window.addEventListener('appinstalled', () => { GC.installEvent = null; GC.toast('GreenCommons is installed'); });
+  window.addEventListener('appinstalled', () => { GC.installEvent = null; GC.toast('GreenAura is installed'); });
   GC.act['install-app'] = async () => {
     if (GC.installEvent) { GC.installEvent.prompt(); try { await GC.installEvent.userChoice; } catch (e) { /* ignore */ } GC.installEvent = null; GC.render(); }
-    else GC.sheet.open({ title: 'Install GreenCommons', html: '<p class="mid">In Chrome, open the menu (three dots) and choose <b>Install app</b> or <b>Add to Home screen</b>. After that GreenCommons opens like any other app, even without internet.</p><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>' });
+    else GC.sheet.open({ title: 'Install GreenAura', html: '<p class="mid">In Chrome, open the menu (three dots) and choose <b>Install app</b> or <b>Add to Home screen</b>. After that GreenAura opens like any other app, even without internet.</p><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>' });
   };
 
   /* ---------- start ---------- */

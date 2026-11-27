@@ -1,4 +1,4 @@
-# GreenCommons
+# GreenAura
 
 A prototype web app that helps households, farms, schools and neighbourhoods cut carbon and save water, food and farm resources. It is plain HTML, CSS and JavaScript with no build step, and it installs from Chrome like an app.
 

@@ -36,7 +36,7 @@
         chal +
         '<div class="card"><div class="small mid">' + t('Tip of the day') + '</div><p>' + esc(GC.tipOfDay()) + '</p></div>' + snap +
         '<div class="chips"><button class="chip" data-go="/leaderboard">' + ic('trophy', 18) + t('Leaderboard') + '</button><button class="chip" data-go="/challenges">' + ic('flag', 18) + t('Challenges') + '</button><button class="chip" data-go="/learn">' + ic('book', 18) + t('Learn') + '</button><button class="chip" data-go="/devices">' + ic('chip', 18) + t('Devices') + '</button></div>' +
-        (GC.installEvent ? '<button class="btn outline block" data-act="install-app">Install GreenCommons on this phone</button>' : '') + '</div>'
+        (GC.installEvent ? '<button class="btn outline block" data-act="install-app">Install GreenAura on this phone</button>' : '') + '</div>'
     };
   };
   GC.act['score-help'] = (el, e) => { e.stopPropagation(); explainScore(); };
@@ -273,7 +273,7 @@
   GC.act['impact-period'] = (el) => { impactPeriod = el.dataset.v; GC.render(); };
   GC.act['impact-share'] = () => {
     const u = GC.user(); const r = GC.range(impactPeriod); const i = GC.impact(u, r.from, r.to);
-    GC.shareText('My GreenCommons impact', 'My GreenCommons impact (' + impactPeriod + '): ' + num(i.co2, 1) + ' kg CO2 avoided, ' + num(i.water) + ' L water saved, ' + num(i.food, 1) + ' kg food saved. Join me on GreenCommons.');
+    GC.shareText('My GreenAura impact', 'My GreenAura impact (' + impactPeriod + '): ' + num(i.co2, 1) + ' kg CO2 avoided, ' + num(i.water) + ' L water saved, ' + num(i.food, 1) + ' kg food saved. Join me on GreenAura.');
   };
 
   /* ====================== 16. GREEN CREDIT ====================== */

@@ -1,4 +1,4 @@
--- GreenCommons online layer for Supabase (free plan). Run this whole file once in the SQL editor.
+-- GreenAura online layer for Supabase (free plan). Run this whole file once in the SQL editor.
 -- Rules are enforced here, on the server, so an edited phone cannot grant itself points.
 
 create table if not exists public.profiles (

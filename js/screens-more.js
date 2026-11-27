@@ -42,7 +42,7 @@
     if (!res.ok) { GC.sheet.set('<div class="err">' + ic('warn') + '<p>' + esc(res.error) + '</p></div><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>', 'Cannot redeem'); return; }
     GC.sheet.set('<p class="mid">Your prototype voucher is ready.</p><div class="code">' + esc(res.rec.code) + '</div><p class="small mid center">' + esc(res.rec.name) + ' · valid for 30 days</p><div class="btn-row"><button class="btn outline" data-act="voucher-email" data-code="' + esc(res.rec.code) + '" data-name="' + esc(res.rec.name) + '">' + ic('mail', 18) + ' Email it</button><button class="btn" data-act="voucher-done">' + t('Done') + '</button></div>', 'Voucher issued');
   };
-  GC.act['voucher-email'] = (el) => GC.mail('GreenCommons voucher: ' + el.dataset.name, 'Your prototype reward code: ' + el.dataset.code + '\nValid for 30 days.\n\nThis is a prototype reward with no cash value.');
+  GC.act['voucher-email'] = (el) => GC.mail('GreenAura voucher: ' + el.dataset.name, 'Your prototype reward code: ' + el.dataset.code + '\nValid for 30 days.\n\nThis is a prototype reward with no cash value.');
   GC.act['voucher-done'] = () => { GC.sheet.close(true); GC.render(); };
 
   /* ====================== 18. LEADERBOARD ====================== */
@@ -233,7 +233,7 @@
     const m = GC.user().inbox.find((x) => x.id === el.dataset.id); m.read = true; GC.save();
     GC.sheet.open({ title: m.title, html: '<p>' + esc(m.body) + '</p><p class="small mid mt">' + esc(GC.fmtTime(m.ts)) + '</p><div class="btn-row"><button class="btn outline" data-act="inbox-email" data-id="' + m.id + '">' + ic('mail', 18) + ' Email me this</button><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>', onClose: () => { if (location.hash.indexOf('#/inbox') === 0) GC.render(); } });
   };
-  GC.act['inbox-email'] = (el) => { const m = GC.user().inbox.find((x) => x.id === el.dataset.id); GC.mail('GreenCommons: ' + m.title, m.body + '\n\nGreenCommons (prototype)'); };
+  GC.act['inbox-email'] = (el) => { const m = GC.user().inbox.find((x) => x.id === el.dataset.id); GC.mail('GreenAura: ' + m.title, m.body + '\n\nGreenAura (prototype)'); };
 
   /* ====================== 23. REPORTS ====================== */
   let repPeriod = 'month';
@@ -259,8 +259,8 @@
   };
   function weekly(series) { const g = []; for (let i = 0; i < series.length; i += 7) { const ch = series.slice(i, i + 7); const row = { date: ch[0].date, carbon: 0, water: 0, food: 0, farm: 0 }; ch.forEach((x) => ['carbon', 'water', 'food', 'farm'].forEach((k) => { row[k] += Math.max(0, x[k]); })); g.push(row); } return g; }
   GC.act['rep-period'] = (el) => { repPeriod = el.dataset.v; GC.render(); };
-  GC.act['rep-email'] = () => { const u = GC.user(); GC.mail('Your GreenCommons report', GC.reportText(u, repPeriod)); };
-  GC.act['rep-share'] = () => { const u = GC.user(); GC.shareText('My GreenCommons report', GC.reportText(u, repPeriod)); };
+  GC.act['rep-email'] = () => { const u = GC.user(); GC.mail('Your GreenAura report', GC.reportText(u, repPeriod)); };
+  GC.act['rep-share'] = () => { const u = GC.user(); GC.shareText('My GreenAura report', GC.reportText(u, repPeriod)); };
 
   /* ====================== 24. PROFILE ====================== */
   GC.screens.profile = () => {
@@ -271,7 +271,7 @@
     return {
       title: 'Profile', tab: 'profile',
       html: '<div class="stack"><div class="card pale row"><div style="width:56px;height:56px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:20px;flex:0 0 56px">' + esc(initials) + '</div><div class="grow"><div class="heading">' + esc(u.name) + '</div><div class="small mid">' + esc(place || 'Add your locality in Settings') + '</div><div class="row wrap mt" style="gap:6px"><span class="tag">' + esc(u.profile.type) + '</span><span class="tag">' + t(lv.name) + '</span></div></div></div>' +
-        '<div class="list card line" style="padding:0 12px">' + R('chart', t('Green Credit'), num(tot.score) + ' points', '/credit') + R('trophy', t('Leaderboard'), '', '/leaderboard') + R('flag', t('Challenges'), '', '/challenges') + R('book', t('Learn'), '', '/learn') + R('users', t('Community'), u.community ? GC.group(u).name : 'Join a group', '/community') + R('doc', t('Reports'), '', '/reports') + R('chip', t('Devices'), u.devices.length + ' connected', '/devices') + R('gear', t('Settings'), '', '/settings') + R('help', t('Help'), '', '/help') + R('info', t('About'), '', '/about') + (GC.installEvent ? R('plus', 'Install app', 'Add GreenCommons to your home screen', '', 'install-app') : '') + '</div></div>'
+        '<div class="list card line" style="padding:0 12px">' + R('chart', t('Green Credit'), num(tot.score) + ' points', '/credit') + R('trophy', t('Leaderboard'), '', '/leaderboard') + R('flag', t('Challenges'), '', '/challenges') + R('book', t('Learn'), '', '/learn') + R('users', t('Community'), u.community ? GC.group(u).name : 'Join a group', '/community') + R('doc', t('Reports'), '', '/reports') + R('chip', t('Devices'), u.devices.length + ' connected', '/devices') + R('gear', t('Settings'), '', '/settings') + R('help', t('Help'), '', '/help') + R('info', t('About'), '', '/about') + (GC.installEvent ? R('plus', 'Install app', 'Add GreenAura to your home screen', '', 'install-app') : '') + '</div></div>'
     };
   };
 
@@ -302,7 +302,7 @@
   /* ====================== 26. HELP ====================== */
   GC.screens.help = () => ({
     title: 'Help', back: '/profile',
-    html: '<div class="stack"><div class="list card line" style="padding:0 12px">' + GC.ui.row('play', 'How GreenCommons works', 'Watch the three-step intro again', '/onboarding/help') + '</div>' +
+    html: '<div class="stack"><div class="list card line" style="padding:0 12px">' + GC.ui.row('play', 'How GreenAura works', 'Watch the three-step intro again', '/onboarding/help') + '</div>' +
       '<h3 class="section-title">Points and levels</h3><div class="card"><p>Every account starts with a Green Credit of <b>2,000</b>. Good deeds add points depending on how big and lasting the effort is. Carbon penalties can take points off. The score stays between 0 and 7,000.</p><div class="kv"><span>Beginner</span><span class="mid">0 to 2,999</span></div><div class="kv"><span>Green</span><span class="mid">3,000 to 4,999</span></div><div class="kv"><span>Champion</span><span class="mid">5,000 to 7,000</span></div><p class="small mid mt">The Reward Wallet is separate. It collects the points you earn and is spent on vouchers.</p></div>' +
       '<h3 class="section-title">Questions</h3><div class="faq card line" style="padding:0 14px">' +
       [['How do I log an action?', 'Tap Log an action on Home, pick a category and a deed, enter the amount and save. You can log up to 7 days back.'],
@@ -316,7 +316,7 @@
   /* ====================== 27. ABOUT ====================== */
   GC.screens.about = () => ({
     title: 'About', back: '/profile',
-    html: '<div class="stack"><div class="center">' + GC.logoSvg(72) + '<h2 class="heading mt">GreenCommons</h2><p class="mid">Version 1.0 (prototype)</p></div>' +
+    html: '<div class="stack"><div class="center">' + GC.logoSvg(72) + '<h2 class="heading mt">GreenAura</h2><p class="mid">Version 1.0 (prototype)</p></div>' +
       '<div class="card pale"><p><b>This is a prototype.</b> Sign-up codes, email checks, the shared leaderboard, the fund pool and vouchers are simulated. Your data stays on this phone.</p></div>' +
       '<div class="card"><div class="semi">How impact figures are estimated</div><p class="small mid mt">Impact numbers are rough estimates built from simple per-action factors. They are not audited. Each line below says whether it comes from a source or is our own assumption, so you can check it.</p>' +
         GC.SOURCES.map((x) => '<div class="mt"><div class="row between"><span class="semi">' + esc(x.topic) + '</span><span class="tag ' + (x.status === 'sourced' ? '' : 'grey') + '">' + (x.status === 'sourced' ? 'Sourced' : 'Assumption') + '</span></div><p class="small" style="margin:4px 0">' + esc(x.use) + '</p><p class="small mid" style="margin:0">' + esc(x.note) + '</p>' + (x.url ? '<p class="small" style="margin:4px 0"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.src) + '</a></p>' : '') + '</div>').join('') + '</div>' +

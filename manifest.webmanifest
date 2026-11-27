@@ -1,6 +1,6 @@
 {
-  "name": "GreenCommons",
-  "short_name": "GreenCommons",
+  "name": "GreenAura",
+  "short_name": "GreenAura",
   "description": "Cut carbon and save water, food and farm resources, together.",
   "start_url": "./index.html",
   "scope": "./",

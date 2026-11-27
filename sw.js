@@ -1,4 +1,4 @@
-/* GreenCommons service worker: caches the app so it opens offline. */
+/* GreenAura service worker: caches the app so it opens offline. */
 const CACHE = 'greencommons-v3';
 const FILES = [
   './', './index.html', './manifest.webmanifest',

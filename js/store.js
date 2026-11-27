@@ -55,7 +55,7 @@
   GC.signup = (d) => {
     const u = newUser(d);
     S.accounts[d.phone] = u; S.session = d.phone;
-    GC.addInbox('official', 'Welcome to GreenCommons', 'Your account is ready. You start with a Green Credit of ' + num(GC.START_SCORE) + ' points. Log your first action to begin.');
+    GC.addInbox('official', 'Welcome to GreenAura', 'Your account is ready. You start with a Green Credit of ' + num(GC.START_SCORE) + ' points. Log your first action to begin.');
     GC.addInbox('official', 'About prototype rewards', 'Vouchers in this prototype are simulated and labelled "Prototype reward". No money or real discounts are involved yet.');
     save(); return u;
   };
@@ -536,7 +536,7 @@
   };
   GC.reportText = (u, period) => {
     const r = GC.reportData(u, period);
-    const lines = ['GreenCommons report', u.name + ' (' + r.from + ' to ' + r.to + ')', '',
+    const lines = ['GreenAura report', u.name + ' (' + r.from + ' to ' + r.to + ')', '',
       'Green Credit: ' + num(r.tot.score) + ' (' + r.level.name + ')', 'Reward Wallet: ' + num(r.tot.wallet), '', 'Net points by category:'];
     r.cats.forEach((c) => lines.push('- ' + c.cat.name + ': ' + num(c.pts)));
     lines.push('', 'Impact in this period:', '- CO2 avoided: ' + num(r.impact.co2, 1) + ' kg', '- Water saved: ' + num(r.impact.water) + ' L', '- Food saved: ' + num(r.impact.food, 1) + ' kg');
