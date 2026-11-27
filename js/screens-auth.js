@@ -204,8 +204,9 @@
     } else {
       const farmer = prof.type === 'Farmer';
       body = '<h2 class="heading">About you</h2><div class="chips mt" style="flex-wrap:wrap;overflow:visible">' + GC.PROFILE_TYPES.map((p) => '<button class="chip' + (prof.type === p ? ' sel' : '') + '" data-act="setup-type" data-v="' + p + '">' + p + '</button>').join('') + '</div>' +
-        '<label class="field"><span class="lbl">Household size</span><input class="input" id="sp-household" type="number" min="1" max="30" value="' + esc(prof.household || 3) + '"></label>' +
-        (farmer ? '<label class="field"><span class="lbl">Land size (acres)</span><input class="input" id="sp-land" type="number" min="0" step="0.1" value="' + esc(prof.land || '') + '"></label><label class="field"><span class="lbl">Main crop</span><input class="input" id="sp-crop" value="' + esc(prof.crop || '') + '"></label><label class="field"><span class="lbl">Irrigation type</span><select class="input" id="sp-irr"><option value="">Choose</option>' + GC.IRRIGATION.map((s) => '<option' + (prof.irrigation === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></label>' : '');
+        '<label class="field"><span class="lbl">Household size</span><input class="input" id="sp-household" type="number" inputmode="numeric" min="1" max="' + GC.HOUSEHOLD_MAX + '" step="1" value="' + esc(prof.household || 3) + '"><span class="small mid">People who live and eat at home. A whole number from 1 to ' + GC.HOUSEHOLD_MAX + '.</span></label>' +
+        '<div id="sp-err"></div>' +
+        (farmer ? '<label class="field"><span class="lbl">Land size (acres)</span><input class="input" id="sp-land" type="number" inputmode="decimal" min="0.1" max="' + GC.LAND_MAX + '" step="0.1" value="' + esc(prof.land || '') + '"></label><label class="field"><span class="lbl">Main crop</span><input class="input" id="sp-crop" value="' + esc(prof.crop || '') + '"></label><label class="field"><span class="lbl">Irrigation type</span><select class="input" id="sp-irr"><option value="">Choose</option>' + GC.IRRIGATION.map((s) => '<option' + (prof.irrigation === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></label>' : '');
     }
     $('#setup').innerHTML = '<div class="dots" style="margin-top:0">' + dots + '</div>' + body +
       '<div class="btn-row"><button class="btn outline" data-act="setup-skip">' + (step === 1 ? 'Not now' : t('Skip')) + '</button><button class="btn" data-act="setup-next">' + t('Continue') + '</button></div>';
@@ -213,18 +214,30 @@
   function readStep() {
     if (step === 2) { prof.state = $('#sp-state').value; prof.district = $('#sp-district').value.trim(); prof.pincode = $('#sp-pincode').value.trim(); prof.locality = $('#sp-locality').value.trim(); }
     if (step === 3) {
-      prof.household = Math.max(1, Number($('#sp-household').value) || 1);
+      prof.household = $('#sp-household').value.trim();
       if (prof.type === 'Farmer') { prof.land = $('#sp-land').value; prof.crop = $('#sp-crop').value.trim(); prof.irrigation = $('#sp-irr').value; }
     }
   }
   function finishSetup() {
-    const u = GC.user(); Object.assign(u.profile, prof); GC.save();
+    const u = GC.user(); Object.assign(u.profile, prof); u.profile.household = Math.floor(Number(prof.household)) || 1; delete u.profile.bigOk; GC.save();
     GC.sheet.open({ title: 'You are all set', html: '<div class="card pale center"><div class="score-num">' + num(GC.START_SCORE) + '</div><p class="mid">Your starting Green Credit is ' + num(GC.START_SCORE) + ' points.</p></div><div class="btn-row"><button class="btn" data-act="setup-done">' + t('Get started') + '</button></div>', onClose: () => { if (here() === 'setup') GC.go('/home'); } });
   }
   GC.act['setup-age'] = (el) => { prof.age = el.dataset.v; drawSetup(); };
   GC.act['setup-type'] = (el) => { readStep(); prof.type = el.dataset.v; drawSetup(); };
-  GC.act['setup-next'] = () => { readStep(); if (step < 3) { step++; drawSetup(); } else finishSetup(); };
-  GC.act['setup-skip'] = () => { if (step < 3) { step++; drawSetup(); } else finishSetup(); };
+  function checkStep3() {
+    const h = Number(prof.household); const err = (m) => { $('#sp-err').innerHTML = GC.ui.msg(m); return false; };
+    if (!String(prof.household).trim() || !isFinite(h) || Math.floor(h) !== h || h < 1 || h > GC.HOUSEHOLD_MAX) return err('Household size must be a whole number from 1 to ' + GC.HOUSEHOLD_MAX + '.');
+    if (prof.type === 'Farmer' && String(prof.land || '').trim() !== '') { const l = Number(prof.land); if (!isFinite(l) || l <= 0 || l > GC.LAND_MAX) return err('Land size must be between 0.1 and ' + GC.LAND_MAX + ' acres, or leave it empty.'); }
+    return true;
+  }
+  GC.act['setup-next'] = () => {
+    readStep();
+    if (step < 3) { step++; drawSetup(); return; }
+    if (!checkStep3()) return;
+    if (Number(prof.household) > GC.HOUSEHOLD_ASK && !prof.bigOk) { GC.confirmSheet({ title: 'Is that right?', body: 'You entered ' + prof.household + ' people. That is fine for a hostel, ashram or large family. Continue?', confirm: 'Yes, continue', onConfirm: () => { prof.bigOk = true; finishSetup(); } }); return; }
+    finishSetup();
+  };
+  GC.act['setup-skip'] = () => { if (step < 3) { step++; drawSetup(); } else { readStep(); if (checkStep3()) finishSetup(); } };
   GC.act['setup-done'] = () => { GC.sheet.close(true); GC.go('/home'); };
 
   /* ---------- 7. Login ---------- */

@@ -122,33 +122,48 @@
   function dayCatPoints(u, date, cat) { return u.logs.filter((l) => l.date === date && l.cat === cat).reduce((a, l) => a + l.points, 0); }
   function dayPenalty(u, date) { return u.penalties.filter((p) => p.date === date).reduce((a, p) => a + p.points, 0); }
 
-  /* Validate and save a deed. Returns {ok, points, error, confirm}. */
+  GC.household = (u) => { const h = Math.floor(Number(((u || GC.user() || {}).profile || {}).household)); return h >= 1 ? Math.min(h, GC.HOUSEHOLD_MAX) : 1; };
+  const people = (u) => Math.min(GC.household(u), 50);
+
+  /* Largest believable amount for one entry of this deed. */
+  GC.deedMax = (deed, u) => {
+    u = u || GC.user();
+    if (deed.unit === 'acres') return Number(u.profile.land) > 0 ? Number(u.profile.land) : 0;
+    return deed.scale ? deed.max * people(u) : deed.max;
+  };
+
+  /* Checks the amount only. Returns an error text or ''. */
+  function amountError(deed, amount, u) {
+    if (!isFinite(amount) || amount <= 0) return 'Enter an amount.';
+    if (amount < deed.min) return 'The minimum for this deed is ' + deed.min + ' ' + deed.unit + '.';
+    if (deed.int && Math.floor(amount) !== amount) return 'Use a whole number of ' + deed.unit + '.';
+    if (deed.unit === 'acres' && !(Number(u.profile.land) > 0)) return 'Add your land size under My farm first (Farm page, Edit).';
+    const mx = GC.deedMax(deed, u);
+    if (amount > mx) return deed.unit === 'acres' ? 'That is more than your farm size of ' + mx + ' acres.' : 'That is more than one day can realistically hold. The most for one day is ' + num(mx, 1) + ' ' + deed.unit + '.';
+    return '';
+  }
+  GC.amountError = amountError;
+
+  /* Validate and save a deed. Returns {ok, points, error}. */
   GC.logDeed = (o) => {
     const u = GC.user(); if (!u) return { ok: false, error: 'Please log in.' };
     const deed = GC.deed(o.deedId); if (!deed) return { ok: false, error: 'Choose a deed.' };
     const amount = Number(o.amount);
-    if (!isFinite(amount) || amount <= 0) return { ok: false, error: 'Enter an amount.' };
-    if (amount < deed.min) return { ok: false, error: 'The minimum for this deed is ' + deed.min + ' ' + deed.unit + '.' };
+    const bad = amountError(deed, amount, u); if (bad) return { ok: false, error: bad };
     const date = o.date || today(), t0 = today();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Choose a date.' };
     if (date > t0) return { ok: false, error: 'The date cannot be in the future.' };
     if (diffDays(t0, date) > 7) return { ok: false, error: 'You can log up to 7 days back.' };
-    const skip = o.ignoreId;
-    const others = u.logs.filter((l) => l.id !== skip);
-    if (deed.once && others.some((l) => l.deedId === deed.id)) return { ok: false, error: 'This one-time deed has already been counted.' };
-    const dup = others.find((l) => l.deedId === deed.id && l.date === date);
+    const latest = u.logs.reduce((m, l) => Math.max(m, l.ts), 0);
+    if (Date.now() < latest - 10 * 60 * 1000) return { ok: false, error: 'Your phone\'s clock looks wrong. Fix the date and time, then try again.' };
+    if (deed.once && u.logs.some((l) => l.deedId === deed.id)) return { ok: false, error: 'This one-time deed has already been counted. It can only be done once.' };
+    const dup = u.logs.find((l) => l.deedId === deed.id && l.date === date);
+    if (dup) return { ok: false, error: 'You already logged this deed for ' + (date === t0 ? 'today' : GC.fmtDate(date)) + '. If the amount was wrong, edit that entry in your log.' };
     let points = GC.DEED_LEVELS[deed.level].points, note = '';
-    if (dup) {
-      if (Date.now() - dup.ts < 5 * 60 * 1000) {
-        if (!o.force) return { ok: false, confirm: true, error: 'You logged this a moment ago. Save anyway?' };
-        points = 0; note = 'Counted once a day';
-      } else return { ok: false, error: 'This deed already counted for that day. Try a different deed.' };
-    }
-    if (points > 0) {
-      const used = others.filter((l) => l.date === date && l.cat === deed.cat).reduce((a, l) => a + l.points, 0);
-      const room = GC.DAILY_CAT_CAP - used;
-      if (room <= 0) return { ok: false, error: 'You have reached the daily limit of ' + GC.DAILY_CAT_CAP + ' points for ' + GC.cat(deed.cat).name + '.' };
-      if (points > room) { points = room; note = 'Daily limit reached'; }
-    }
+    const used = u.logs.filter((l) => l.date === date && l.cat === deed.cat).reduce((a, l) => a + l.points, 0);
+    const room = GC.DAILY_CAT_CAP - used;
+    if (room <= 0) return { ok: false, error: 'You have reached the daily limit for ' + GC.cat(deed.cat).name + '. Come back tomorrow.' };
+    if (points > room) { points = room; note = 'Daily limit reached'; }
     const entry = { id: uid(), ts: Date.now(), date, cat: deed.cat, deedId: deed.id, amount, points, note: (o.note || '').slice(0, 200), photo: o.photo || '', flag: note };
     u.logs.push(entry);
     afterChange(u);
@@ -156,12 +171,19 @@
     return { ok: true, points, entry, flag: note };
   };
 
-  GC.deleteLog = (id) => { const u = GC.user(); if (!u) return; u.logs = u.logs.filter((l) => l.id !== id); recomputeBadges(u, true); save(); };
+  GC.deleteLog = (id) => {
+    const u = GC.user(); if (!u) return { ok: false };
+    const l = u.logs.find((x) => x.id === id); if (!l) return { ok: true };
+    const after = u.logs.filter((x) => x.id !== id);
+    const earned = after.reduce((a, x) => a + x.points, 0) + u.quizPoints;
+    if (earned < u.spent) return { ok: false, error: 'This entry\'s points have already been spent on a reward, so it cannot be deleted.' };
+    u.logs = after; recomputeBadges(u, true); save(); return { ok: true };
+  };
 
   GC.editLog = (id, amount, note) => {
     const u = GC.user(); const l = u.logs.find((x) => x.id === id); if (!l) return { ok: false, error: 'Entry not found.' };
     const deed = GC.deed(l.deedId); const a = Number(amount);
-    if (!isFinite(a) || a < deed.min) return { ok: false, error: 'The minimum for this deed is ' + deed.min + ' ' + deed.unit + '.' };
+    const bad = amountError(deed, a, u); if (bad) return { ok: false, error: bad };
     l.amount = a; l.note = (note || '').slice(0, 200); save(); return { ok: true };
   };
 
@@ -181,6 +203,9 @@
   GC.addElectricity = (kwh, src) => {
     const u = GC.user(); const value = Number(kwh);
     if (!isFinite(value) || value <= 0) return { ok: false, error: 'Enter the kWh used this week.' };
+    const eMax = GC.KWH_PER_PERSON_WEEK * people(u);
+    if (value < GC.KWH_MIN_WEEK) return { ok: false, error: 'That looks too low for a week. Check your meter and try again.' };
+    if (value > eMax) return { ok: false, error: 'That looks too high for ' + GC.household(u) + (GC.household(u) === 1 ? ' person' : ' people') + ' in a week (the most we accept is ' + num(eMax) + ' kWh). Check your meter.' };
     const week = weekStart(today());
     const list = u.readings.electricity;
     let r = list.find((x) => x.week === week);
@@ -203,6 +228,9 @@
   GC.addWater = (litres, src) => {
     const u = GC.user(); const value = Number(litres);
     if (!isFinite(value) || value <= 0) return { ok: false, error: 'Enter the litres used this week.' };
+    const wMax = GC.LITRES_PER_PERSON_WEEK * people(u);
+    if (value < GC.LITRES_MIN_WEEK) return { ok: false, error: 'That looks too low for a week. Check your meter and try again.' };
+    if (value > wMax) return { ok: false, error: 'That looks too high for ' + GC.household(u) + (GC.household(u) === 1 ? ' person' : ' people') + ' in a week (the most we accept is ' + num(wMax) + ' litres). Check your meter.' };
     const week = weekStart(today());
     const list = u.readings.water;
     let r = list.find((x) => x.week === week);
@@ -226,6 +254,9 @@
   GC.recordTrip = (km, mode) => {
     const u = GC.user(); const k = Number(km);
     if (!isFinite(k) || k <= 0) return { ok: false, error: 'Enter the distance in km.' };
+    if (k > 500) return { ok: false, error: 'A single trip over 500 km is not accepted. Check the distance.' };
+    if (u.trips.filter((x) => x.date === today()).length >= GC.TRIPS_PER_DAY) return { ok: false, error: 'You have already saved ' + GC.TRIPS_PER_DAY + ' trips today.' };
+    if (u.trips.some((x) => Date.now() - x.ts < 60000 && x.mode === mode && Math.abs(x.km - k) < 0.05)) return { ok: false, error: 'This trip was just saved.' };
     const trip = { id: uid(), ts: Date.now(), date: today(), km: k, mode };
     u.trips.push(trip);
     let result = { ok: true, status: 'noted' };

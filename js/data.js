@@ -58,6 +58,30 @@ GC.DEEDS = [
   { id: 'r8', cat: 'farm', name: 'Install a drip irrigation system', level: 'excellent', unit: 'systems', min: 1, irr: 20000, acres: 1, once: true }
 ];
 
+/* Sensible limits for one entry (one deed, one day).
+   max   = most that is believable in a day
+   scale = the limit grows with household size (up to 50 people)
+   int   = whole numbers only
+   Deeds measured in acres can never be more than the land size saved in My farm. */
+(function () {
+  const L = {
+    c1: { max: 60 }, c2: { max: 150 }, c3: { max: 150 }, c4: { max: 24, scale: 1 }, c5: { max: 6, scale: 1, int: 1 },
+    c6: { max: 20, int: 1 }, c7: { max: 30, scale: 1 }, c8: { max: 1, int: 1 },
+    w1: { max: 150, scale: 1 }, w2: { max: 5, int: 1 }, w3: { max: 200, scale: 1 }, w4: { max: 3000 }, w5: { max: 10, scale: 1, int: 1 },
+    w6: { max: 3, scale: 1, int: 1 }, w7: { max: 3, int: 1 }, w8: { max: 1, int: 1 },
+    f1: { max: 5, scale: 1, int: 1 }, f2: { max: 1, int: 1 }, f3: { max: 10, scale: 1 }, f4: { max: 100 }, f5: { max: 5, scale: 1, int: 1 },
+    f6: { max: 3, scale: 1, int: 1 }, f7: { max: 2, int: 1 }, f8: { max: 1, int: 1 },
+    r1: { acres: 1 }, r2: { acres: 1 }, r3: { acres: 1 }, r4: { max: 1000 }, r5: { acres: 1 }, r6: { max: 10, int: 1 }, r7: { max: 200, int: 1 }, r8: { max: 1, int: 1 }
+  };
+  GC.DEEDS.forEach((d) => { Object.assign(d, L[d.id] || {}); });
+})();
+GC.HOUSEHOLD_MAX = 500;      // hostels, ashrams and large joint families are allowed
+GC.HOUSEHOLD_ASK = 25;       // above this we ask "is that right?"
+GC.LAND_MAX = 5000;          // acres
+GC.TRIPS_PER_DAY = 10;
+GC.KWH_PER_PERSON_WEEK = 150;  GC.KWH_MIN_WEEK = 2;
+GC.LITRES_PER_PERSON_WEEK = 3500; GC.LITRES_MIN_WEEK = 50;
+
 GC.VOUCHERS = [
   { id: 'v1', name: 'Participation certificate', cost: 600, level: 'Beginner', desc: 'A certificate for your green habits.' },
   { id: 'v2', name: '5% shop discount', cost: 1000, level: 'Beginner', desc: 'A discount at a partner shop.' },

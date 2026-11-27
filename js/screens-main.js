@@ -45,8 +45,8 @@
     GC.sheet.open({
       title: 'How is it calculated?',
       html: '<div class="stack"><p>Your Green Credit = <b>2,000</b> + points from good deeds &minus; carbon penalties.</p><p class="mid">It never goes below 0 or above 7,000, and points do not expire.</p>' +
-        '<div class="list"><div class="kv"><span>Basic deed</span><b>15</b></div><div class="kv"><span>Really good deed</span><b>25</b></div><div class="kv"><span>Very good deed</span><b>50</b></div><div class="kv"><span>Excellent deed</span><b>100</b></div></div>' +
-        '<p class="mid small">Each category earns at most ' + GC.DAILY_CAT_CAP + ' points a day. Only Carbon has penalties, and they come from measured numbers such as your electricity meter or a confirmed car trip. They take off at most ' + GC.DAILY_PENALTY_CAP + ' points a day.</p>' +
+        '<p class="mid small">Bigger, longer-lasting deeds earn more than small everyday ones. You see the points after you save a deed.</p>' +
+        '<p class="mid small">Each deed counts once a day, and each category earns at most ' + GC.DAILY_CAT_CAP + ' points a day. Only Carbon has penalties, and they come from measured numbers such as your electricity meter or a confirmed car trip. They take off at most ' + GC.DAILY_PENALTY_CAP + ' points a day.</p>' +
         '<p class="small"><b>This is a habit score, not a financial credit score.</b> It is never shared with banks.</p></div><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>'
     });
   }
@@ -61,13 +61,14 @@
   function room(u, cat, date) { return GC.DAILY_CAT_CAP - u.logs.filter((l) => l.date === date && l.cat === cat).reduce((a, l) => a + l.points, 0); }
   function qlPreview() {
     const u = GC.user(); const deed = GC.deed(QL.deedId);
-    if (!deed) return { text: 'Choose a deed to see the points.', warn: false };
-    const lvl = GC.DEED_LEVELS[deed.level]; const date = QL.date || today();
-    if (deed.once && u.logs.some((l) => l.deedId === deed.id)) return { text: 'This one-time deed has already been counted.', warn: true };
-    const r = room(u, deed.cat, date);
-    if (r <= 0) return { text: 'Daily limit of ' + GC.DAILY_CAT_CAP + ' points reached for ' + GC.cat(deed.cat).name + '.', warn: true };
-    const pts = Math.min(lvl.points, r);
-    return { text: 'You will earn ' + pts + ' points (' + lvl.name + ')', warn: false };
+    if (!deed) return { text: 'Choose what you did, then enter the amount.', warn: false };
+    const date = QL.date || today();
+    if (deed.once && u.logs.some((l) => l.deedId === deed.id)) return { text: 'This one-time deed has already been counted. It can only be done once.', warn: true };
+    if (u.logs.some((l) => l.deedId === deed.id && l.date === date)) return { text: 'You already logged this deed for that day. Edit the entry instead.', warn: true };
+    if (room(u, deed.cat, date) <= 0) return { text: 'You have reached the daily limit for ' + GC.cat(deed.cat).name + '.', warn: true };
+    const mx = GC.deedMax(deed, u);
+    if (deed.unit === 'acres' && !mx) return { text: 'Add your land size under My farm first (Farm page, Edit).', warn: true };
+    return { text: 'Enter only what you really did. The most for one day is ' + num(mx, 1) + ' ' + deed.unit + '.', warn: false };
   }
   function qlHtml() {
     const deeds = GC.DEEDS.filter((d) => d.cat === QL.cat);
@@ -75,8 +76,8 @@
     const pv = qlPreview();
     return '<div class="stack"><div class="chips">' + GC.CATS.map((c) => '<button class="chip' + (c.id === QL.cat ? ' sel' : '') + '" data-act="ql-cat" data-v="' + c.id + '">' + ic(c.icon, 18) + t(c.name) + '</button>').join('') + '</div>' +
       '<div><div class="small mid" style="margin-bottom:6px">' + t('Deed') + '</div><div class="list" style="max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:0 10px">' +
-      deeds.map((d) => '<button class="item" style="min-height:48px" data-act="ql-deed" data-v="' + d.id + '" aria-pressed="' + (d.id === QL.deedId) + '"><span class="grow' + (d.id === QL.deedId ? ' semi' : '') + '">' + esc(d.name) + '</span><span class="tag' + (d.id === QL.deedId ? '' : ' grey') + '">' + GC.DEED_LEVELS[d.level].points + '</span>' + (d.id === QL.deedId ? ic('check', 20) : '') + '</button>').join('') + '</div></div>' +
-      '<label class="field"><span class="lbl">' + t('Amount') + (deed ? ' (' + esc(deed.unit) + ', minimum ' + deed.min + ')' : '') + '</span><input class="input" id="ql-amount" type="number" inputmode="decimal" min="0" step="any" value="' + esc(QL.amount) + '"' + (deed ? '' : ' disabled') + '></label>' +
+      deeds.map((d) => '<button class="item" style="min-height:48px" data-act="ql-deed" data-v="' + d.id + '" aria-pressed="' + (d.id === QL.deedId) + '"><span class="grow' + (d.id === QL.deedId ? ' semi' : '') + '">' + esc(d.name) + '</span>' + (d.once ? '<span class="tag grey">one-time</span>' : '') + (d.id === QL.deedId ? ic('check', 20) : '') + '</button>').join('') + '</div></div>' +
+      '<label class="field"><span class="lbl">' + t('Amount') + (deed ? ' (' + esc(deed.unit) + ', minimum ' + deed.min + ')' : '') + '</span><input class="input" id="ql-amount" type="number" inputmode="' + (deed && deed.int ? 'numeric' : 'decimal') + '" min="' + (deed ? deed.min : 0) + '"' + (deed ? ' max="' + GC.deedMax(deed) + '"' : '') + ' step="' + (deed && deed.int ? 1 : 'any') + '" value="' + esc(QL.amount) + '"' + (deed ? '' : ' disabled') + '></label>' +
       '<label class="field"><span class="lbl">' + t('Date') + '</span><input class="input" id="ql-date" type="date" min="' + addDays(today(), -7) + '" max="' + today() + '" value="' + esc(QL.date || today()) + '" data-chg="ql-refresh"></label>' +
       '<div class="card pale" id="ql-preview" aria-live="polite"><span class="semi">' + (pv.warn ? ic('warn', 18) + ' ' : '') + esc(pv.text) + '</span></div>' +
       '<label class="field"><span class="lbl">' + t('Note') + ' (optional)</span><textarea class="input" id="ql-note" maxlength="200">' + esc(QL.note) + '</textarea></label>' +
@@ -130,7 +131,7 @@
     list.forEach((l) => { if (l.date !== cur) { cur = l.date; html += '<h3 class="section-title">' + esc(GC.fmtDate(cur)) + '</h3>'; } html += '<div class="list">' + entryRows([l]) + '</div>'; });
     return { title: 'History', back: '/log', html: list.length ? html : GC.ui.empty('Nothing logged yet.', t('Log an action'), 'open-log') };
   };
-  GC.act['entry-del'] = (el) => GC.confirmSheet({ title: 'Delete this entry?', body: 'Its points will be removed from your score.', confirm: t('Delete'), onConfirm: () => { GC.deleteLog(el.dataset.id); GC.render(); } });
+  GC.act['entry-del'] = (el) => GC.confirmSheet({ title: 'Delete this entry?', body: 'Its points will be removed from your score.', confirm: t('Delete'), onConfirm: () => { const r = GC.deleteLog(el.dataset.id); if (!r.ok) GC.toast(r.error); GC.render(); } });
   GC.act['entry-edit'] = (el) => {
     const u = GC.user(); const l = u.logs.find((x) => x.id === el.dataset.id); const d = GC.deed(l.deedId);
     GC.sheet.open({ title: t('Edit'), html: '<p class="semi">' + esc(d.name) + '</p><label class="field"><span class="lbl">' + t('Amount') + ' (' + esc(d.unit) + ')</span><input class="input" id="ed-amount" type="number" step="any" value="' + l.amount + '"></label><label class="field"><span class="lbl">' + t('Note') + '</span><input class="input" id="ed-note" value="' + esc(l.note) + '" maxlength="200"></label><div id="ed-err"></div><div class="btn-row"><button class="btn outline" data-act="sheet-close">' + t('Cancel') + '</button><button class="btn" data-act="entry-save" data-id="' + l.id + '">' + t('Save') + '</button></div>' });
@@ -228,16 +229,16 @@
       html: '<div class="stack"><div class="card pale"><div class="row"><span style="color:var(--green)">' + ic(c.icon, 32) + '</span><div class="grow"><div class="semi">' + t(c.name) + '</div><div class="small mid">' + esc(c.blurb) + '</div></div><div class="score-num" style="font-size:28px">' + (tot.byCat[id] < 0 ? '&minus;' : '') + num(Math.abs(tot.byCat[id])) + '</div></div></div>' +
         '<div class="card"><div class="small mid" style="margin-bottom:8px">Points, last 7 days</div>' + catStrip(u, id) + '</div>' +
         '<button class="btn block" data-act="open-log" data-cat="' + id + '">' + t('Add') + '</button>' + extra +
-        '<h3 class="section-title">Deeds and points</h3><div class="list">' + deeds.map((d) => '<button class="item" data-act="open-log" data-cat="' + id + '" data-deed="' + d.id + '"><span class="grow"><span class="semi">' + esc(d.name) + '</span><br><span class="meta">per ' + esc(d.unit) + ' · minimum ' + d.min + (d.once ? ' · one-time' : '') + '</span></span><span class="tag">' + GC.DEED_LEVELS[d.level].name.replace(' deed', '') + '</span><span class="pts-plus">+' + GC.DEED_LEVELS[d.level].points + '</span></button>').join('') + '</div>' +
+        '<h3 class="section-title">Deeds</h3><div class="list">' + deeds.map((d) => '<button class="item" data-act="open-log" data-cat="' + id + '" data-deed="' + d.id + '"><span class="grow"><span class="semi">' + esc(d.name) + '</span><br><span class="meta">per ' + esc(d.unit) + ' · minimum ' + d.min + (d.once ? ' · one-time' : '') + '</span></span></button>').join('') + '</div>' +
         '<h3 class="section-title">Today\'s entries</h3>' + (todayList.length ? '<div class="list">' + entryRows(todayList) + '</div>' : GC.ui.empty('Nothing logged in ' + c.name + ' today.', t('Add'), 'open-log')) + '</div>'
     };
   };
   GC.act['why-penalty'] = () => GC.sheet.open({ title: 'Why did this happen?', html: '<p>Carbon penalties come only from measured numbers, never from anything you type about your own habits:</p><ul class="mid"><li>A weekly electricity reading more than 20% above your own average takes off 10 points.</li><li>A confirmed solo car trip over 25 km, or under 2 km, takes off 10 points.</li></ul><p class="small mid">Penalties start after four weeks of readings, take off at most ' + GC.DAILY_PENALTY_CAP + ' points a day, and never reduce your Reward Wallet.</p><div class="btn-row"><button class="btn" data-act="sheet-close">' + t('Done') + '</button></div>' });
   GC.act['farm-edit'] = () => {
     const p = GC.user().profile;
-    GC.sheet.open({ title: 'My farm', html: '<label class="field"><span class="lbl">Land size (acres)</span><input class="input" id="fm-land" type="number" min="0" step="0.1" value="' + esc(p.land || '') + '"></label><label class="field"><span class="lbl">Main crop</span><input class="input" id="fm-crop" value="' + esc(p.crop || '') + '"></label><label class="field"><span class="lbl">Irrigation type</span><select class="input" id="fm-irr"><option value="">Choose</option>' + GC.IRRIGATION.map((s) => '<option' + (p.irrigation === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></label><div class="btn-row"><button class="btn outline" data-act="sheet-close">' + t('Cancel') + '</button><button class="btn" data-act="farm-save">' + t('Save') + '</button></div>' });
+    GC.sheet.open({ title: 'My farm', html: '<label class="field"><span class="lbl">Land size (acres)</span><input class="input" id="fm-land" type="number" min="0.1" max="' + GC.LAND_MAX + '" step="0.1" value="' + esc(p.land || '') + '"></label><label class="field"><span class="lbl">Main crop</span><input class="input" id="fm-crop" value="' + esc(p.crop || '') + '"></label><label class="field"><span class="lbl">Irrigation type</span><select class="input" id="fm-irr"><option value="">Choose</option>' + GC.IRRIGATION.map((s) => '<option' + (p.irrigation === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></label><div class="btn-row"><button class="btn outline" data-act="sheet-close">' + t('Cancel') + '</button><button class="btn" data-act="farm-save">' + t('Save') + '</button></div>' });
   };
-  GC.act['farm-save'] = () => { const p = GC.user().profile; p.land = $('#fm-land').value; p.crop = $('#fm-crop').value.trim(); p.irrigation = $('#fm-irr').value; GC.save(); GC.sheet.close(true); GC.render(); };
+  GC.act['farm-save'] = () => { const p = GC.user().profile; const land = $('#fm-land').value.trim(); if (land !== '') { const n = Number(land); if (!isFinite(n) || n <= 0 || n > GC.LAND_MAX) { GC.toast('Land size must be between 0.1 and ' + GC.LAND_MAX + ' acres.'); return; } const used = Math.max.apply(null, [0].concat(GC.user().logs.filter((l) => GC.deed(l.deedId) && GC.deed(l.deedId).unit === 'acres').map((l) => l.amount))); if (n < used) { GC.toast('You already logged ' + used + ' acres, so the land size cannot be smaller than that.'); return; } } p.land = land; p.crop = $('#fm-crop').value.trim(); p.irrigation = $('#fm-irr').value; GC.save(); GC.sheet.close(true); GC.render(); };
 
   /* ====================== 15. IMPACT ====================== */
   let impactPeriod = 'week';
@@ -251,7 +252,7 @@
       ['CO2 avoided', num(imp.co2, 1), 'kg', 'cloud'], ['Water saved', num(imp.water), 'litres', 'drop'], ['Food saved', num(imp.food, 1), 'kg', 'leaf'],
       ['Irrigation saved', num(imp.irr), 'litres', 'sprout'], ['Good practice', num(imp.acres, 1), 'acres', 'sprout']
     ].map((c, i) => '<div class="card' + (i === 4 ? ' tile-wide' : '') + '" style="' + (i === 4 ? 'grid-column:1/-1' : '') + '"><div class="row" style="color:var(--green)">' + ic(c[3], 22) + '</div><div class="score-num" style="font-size:26px">' + c[1] + '</div><div class="small mid">' + c[2] + ' · ' + c[0] + '</div></div>').join('');
-    const avg = GC.AVG_HOUSEHOLD_WEEK; const f = r.days / 7;
+    const avg = GC.AVG_HOUSEHOLD_WEEK; const f = (r.days / 7) * (Math.min(GC.household(u), 50) / 4);
     const cmp = [['CO2 avoided (kg)', imp.co2, avg.co2 * f], ['Water saved (litres)', imp.water, avg.water * f], ['Food saved (kg)', imp.food, avg.food * f]].map((x) => {
       const mx = Math.max(x[1], x[2], 1);
       return '<div class="mt"><div class="small">' + x[0] + '</div><div class="row small mid"><span style="width:56px">You</span><div class="grow">' + GC.ui.bar(x[1] / mx) + '</div><span style="width:56px;text-align:right">' + num(x[1], 1) + '</span></div><div class="row small mid"><span style="width:56px">Average</span><div class="grow">' + GC.ui.bar(x[2] / mx) + '</div><span style="width:56px;text-align:right">' + num(x[2], 1) + '</span></div></div>';
@@ -292,7 +293,7 @@
         '<div class="card"><div class="semi" style="margin-bottom:8px">Net points by category</div>' + cats.map((x) => '<div class="row small" style="margin-top:8px"><span style="width:76px">' + ic(x.c.icon, 18) + ' ' + t(x.c.name) + '</span><div class="grow">' + GC.ui.bar(Math.max(0, x.v) / maxv) + '</div><span style="width:48px;text-align:right">' + (x.v < 0 ? '&minus;' : '') + num(Math.abs(x.v)) + '</span></div>').join('') + '</div>' +
         '<div class="card"><div class="semi" style="margin-bottom:8px">Last 12 weeks</div>' + GC.lineChart(hist, 'Green Credit over 12 weeks') + '</div>' +
         '<div class="card pale"><div class="semi">' + t('How to improve') + '</div><p class="small mid">' + (u.logs.length ? t(weakest.c.name) + ' is your lowest area. Two easy actions:' : 'Start with two easy actions:') + '</p>' +
-        (easy.length ? easy.map((d) => '<button class="item" data-act="open-log" data-cat="' + d.cat + '" data-deed="' + d.id + '"><span class="grow">' + esc(d.name) + '</span><span class="pts-plus">+' + GC.DEED_LEVELS[d.level].points + '</span></button>').join('') : '<p>Great work today. Come back tomorrow.</p>') + '</div>' +
+        (easy.length ? easy.map((d) => '<button class="item" data-act="open-log" data-cat="' + d.cat + '" data-deed="' + d.id + '"><span class="grow">' + esc(d.name) + '</span></button>').join('') : '<p>Great work today. Come back tomorrow.</p>') + '</div>' +
         '<div class="list card line" style="padding:0 12px">' + GC.ui.row('doc', t('Why did my score change?'), '', '', 'score-changes') + GC.ui.row('help', t('How is it calculated?'), '', '', 'explain-score') + '</div>' +
         '<p class="demo-note"><b>This is a habit score, not a financial credit score.</b> It is never shared with banks.</p></div>'
     };
