@@ -1,9 +1,9 @@
 /* GreenCommons service worker: caches the app so it opens offline. */
-const CACHE = 'greencommons-v2';
+const CACHE = 'greencommons-v3';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './css/styles.css',
-  './js/translations.js', './js/i18n.js', './js/data.js', './js/store.js', './js/ui.js',
+  './js/translations.js', './js/config.js', './js/cloud.js', './js/i18n.js', './js/data.js', './js/store.js', './js/ui.js',
   './js/screens-auth.js', './js/screens-main.js', './js/screens-more.js', './js/app.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'
 ];

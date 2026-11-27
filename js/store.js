@@ -168,6 +168,7 @@
     u.logs.push(entry);
     afterChange(u);
     save();
+    if (GC.cloud && GC.cloud.enabled) GC.cloud.pushLog(entry);
     return { ok: true, points, entry, flag: note };
   };
 
@@ -177,14 +178,18 @@
     const after = u.logs.filter((x) => x.id !== id);
     const earned = after.reduce((a, x) => a + x.points, 0) + u.quizPoints;
     if (earned < u.spent) return { ok: false, error: 'This entry\'s points have already been spent on a reward, so it cannot be deleted.' };
-    u.logs = after; recomputeBadges(u, true); save(); return { ok: true };
+    u.logs = after; recomputeBadges(u, true); save();
+    if (GC.cloud && GC.cloud.enabled) GC.cloud.pushDelete(l);
+    return { ok: true };
   };
 
   GC.editLog = (id, amount, note) => {
     const u = GC.user(); const l = u.logs.find((x) => x.id === id); if (!l) return { ok: false, error: 'Entry not found.' };
     const deed = GC.deed(l.deedId); const a = Number(amount);
     const bad = amountError(deed, a, u); if (bad) return { ok: false, error: bad };
-    l.amount = a; l.note = (note || '').slice(0, 200); save(); return { ok: true };
+    l.amount = a; l.note = (note || '').slice(0, 200); save();
+    if (GC.cloud && GC.cloud.enabled) { GC.cloud.pushDelete(l); GC.cloud.pushLog(l); }
+    return { ok: true };
   };
 
   function pushPenalty(u, date, points, reason, kind, ref) {

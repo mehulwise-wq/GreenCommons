@@ -47,6 +47,36 @@
 
   /* ====================== 18. LEADERBOARD ====================== */
   const LB = { kind: 'people', period: 'week', cat: 'all' };
+  /* Live online group (only when js/config.js is filled in). Scores come from the server. */
+  function onlineCard() {
+    if (!GC.cloud || !GC.cloud.enabled) return '';
+    const u = GC.user(); const code = u.onlineGroup;
+    if (!code) return '<div class="card pale"><div class="semi">Online group</div><p class="small mid">Join a real group with a code from your school, ward or farm group. Type a new code and a name to start one.</p>' +
+      '<label class="field"><span class="lbl">Group code</span><input class="input" id="og-code" maxlength="24" placeholder="e.g. GREEN-SCH-PUNE"></label>' +
+      '<label class="field"><span class="lbl">Group name (only when starting a new group)</span><input class="input" id="og-name" maxlength="60"></label><div id="og-msg"></div>' +
+      '<button class="btn" data-act="og-join">Join or start group</button></div>';
+    setTimeout(loadBoard, 0);
+    return '<div class="card"><div class="row between"><span class="semi">Online group: ' + esc(code) + '</span><button class="btn small ghost" data-act="og-leave">Leave</button></div><div id="og-board" class="list mt"><p class="small mid">Loading from the server…</p></div></div>';
+  }
+  async function loadBoard() {
+    const u = GC.user(); const box = document.getElementById('og-board'); if (!u || !box || !u.onlineGroup) return;
+    await GC.cloud.flush();
+    const r = await GC.cloud.board(u.onlineGroup);
+    if (!document.getElementById('og-board')) return;
+    if (!r.ok) { document.getElementById('og-board').innerHTML = '<p class="small mid">' + esc(r.offline ? 'Sign-in online is not complete yet. Check your connection and reopen this page.' : r.error) + '</p>'; return; }
+    document.getElementById('og-board').innerHTML = r.data.map((x, i) => '<div class="item' + (x.me ? ' me-row' : '') + '"><span style="width:24px" class="semi">' + (i + 1) + '</span><span class="grow semi">' + esc(x.name) + (x.me ? ' (you)' : '') + '</span><span class="semi">' + x.score + '</span></div>').join('') || '<p class="small mid">No members yet.</p>';
+  }
+  GC.act['og-join'] = async () => {
+    const code = (document.getElementById('og-code').value || '').trim().toUpperCase(), name = (document.getElementById('og-name').value || '').trim();
+    const msg = document.getElementById('og-msg');
+    if (!/^[A-Z0-9-]{4,24}$/.test(code)) { msg.innerHTML = GC.ui.msg('Use 4 to 24 letters, numbers or dashes.'); return; }
+    msg.innerHTML = GC.ui.msg('Joining…');
+    const r = await GC.cloud.joinGroup(code, name);
+    if (!r.ok) { msg.innerHTML = GC.ui.msg(r.offline ? 'You are not signed in online yet. Check your connection and try again.' : r.error); return; }
+    GC.user().onlineGroup = code; GC.save(); GC.render();
+  };
+  GC.act['og-leave'] = async () => { const u = GC.user(); await GC.cloud.leaveGroup(u.onlineGroup); u.onlineGroup = ''; GC.save(); GC.render(); };
+
   GC.screens.leaderboard = () => {
     const rows = GC.leaderboard(LB.kind, LB.period, LB.cat);
     const top = rows.slice(0, 3), rest = rows.slice(3, 10);
@@ -57,7 +87,7 @@
     const rowHtml = (r, i) => '<div class="item' + (r.me ? ' me-row' : '') + '"><span style="width:24px" class="semi">' + (i + 1) + '</span><span class="grow"><span class="semi">' + esc(r.name) + (r.me ? ' (you)' : '') + '</span><br><span class="meta">' + esc(r.sub) + '</span></span><span class="semi">' + num(r.value) + '</span></div>';
     return {
       title: 'Leaderboard', back: '/home',
-      html: '<div class="stack">' + GC.ui.seg([{ id: 'people', name: t('People') }, { id: 'groups', name: t('Groups') }], LB.kind, 'lb-kind') + GC.ui.seg([{ id: 'week', name: 'This week' }, { id: 'month', name: 'This month' }], LB.period, 'lb-period') +
+      html: '<div class="stack">' + onlineCard() + GC.ui.seg([{ id: 'people', name: t('People') }, { id: 'groups', name: t('Groups') }], LB.kind, 'lb-kind') + GC.ui.seg([{ id: 'week', name: 'This week' }, { id: 'month', name: 'This month' }], LB.period, 'lb-period') +
         GC.ui.chips([{ id: 'all', name: t('All') }].concat(GC.CATS.map((c) => ({ id: c.id, name: t(c.name), icon: c.icon }))), LB.cat, 'lb-cat') +
         '<p class="small mid center">Demo community · ' + (LB.kind === 'groups' ? 'ranked by points per member so size cannot win' : 'first name, last initial and locality only') + '</p>' +
         podium + '<div class="list">' + rest.map((r, i) => rowHtml(r, i + 3)).join('') + '</div>' +

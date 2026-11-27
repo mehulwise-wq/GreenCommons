@@ -181,6 +181,7 @@
     }
     clearInterval(otpTimer);
     GC.signup({ name: f.name, phone: f.phone, email: f.email, pin: f.pin });
+    if (GC.cloud.enabled) GC.cloud.connect(f.phone, f.pin, GC.user());
     GC.unlocked = true; GC.flow = {};
     GC.go('/setup');
   };
@@ -219,7 +220,7 @@
     }
   }
   function finishSetup() {
-    const u = GC.user(); Object.assign(u.profile, prof); u.profile.household = Math.floor(Number(prof.household)) || 1; delete u.profile.bigOk; GC.save();
+    const u = GC.user(); Object.assign(u.profile, prof); u.profile.household = Math.floor(Number(prof.household)) || 1; delete u.profile.bigOk; GC.save(); if (GC.cloud.enabled) GC.cloud.syncProfile();
     GC.sheet.open({ title: 'You are all set', html: '<div class="card pale center"><div class="score-num">' + num(GC.START_SCORE) + '</div><p class="mid">Your starting Green Credit is ' + num(GC.START_SCORE) + ' points.</p></div><div class="btn-row"><button class="btn" data-act="setup-done">' + t('Get started') + '</button></div>', onClose: () => { if (here() === 'setup') GC.go('/home'); } });
   }
   GC.act['setup-age'] = (el) => { prof.age = el.dataset.v; drawSetup(); };
@@ -277,7 +278,7 @@
     if (!/^\d{10}$/.test(phone)) { msg.innerHTML = GC.ui.msg('Enter your 10-digit mobile number.'); return; }
     const res = GC.login(phone, pin);
     pin = ''; refreshPin();
-    if (res.ok) { GC.unlocked = true; GC.go('/home'); return; }
+    if (res.ok) { if (GC.cloud.enabled) GC.cloud.connect(phone, pin, res.user); GC.unlocked = true; GC.go('/home'); return; }
     if (res.locked) { checkLock(); return; }
     msg.innerHTML = GC.ui.msg(res.error + (res.left ? ' ' + res.left + ' tries left.' : ''));
   };
