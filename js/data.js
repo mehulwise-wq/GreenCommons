@@ -21,17 +21,17 @@ GC.DEED_LEVELS = {
    Impact per unit: co2 (kg), water (L), food (kg), irr (L irrigation), acres. */
 GC.DEEDS = [
   // Carbon
-  { id: 'c1', cat: 'carbon', name: 'Walk or cycle instead of driving', level: 'basic', unit: 'km', min: 1, co2: 0.2 },
+  { id: 'c1', cat: 'carbon', name: 'Walk or cycle instead of driving', level: 'basic', unit: 'km', min: 1, co2: 0.16 },
   { id: 'c2', cat: 'carbon', name: 'Take a bus, metro or train instead of a car', level: 'basic', unit: 'km', min: 3, co2: 0.12 },
-  { id: 'c3', cat: 'carbon', name: 'Share a ride (carpool)', level: 'good', unit: 'km', min: 3, co2: 0.1 },
+  { id: 'c3', cat: 'carbon', name: 'Share a ride (carpool)', level: 'good', unit: 'km', min: 3, co2: 0.08 },
   { id: 'c4', cat: 'carbon', name: 'Switch off lights and fans when not needed', level: 'basic', unit: 'hours', min: 1, co2: 0.07 },
   { id: 'c5', cat: 'carbon', name: 'Dry clothes in the sun, not a dryer', level: 'basic', unit: 'loads', min: 1, co2: 2 },
   { id: 'c6', cat: 'carbon', name: 'Plant a tree', level: 'very', unit: 'trees', min: 1, co2: 20 },
-  { id: 'c7', cat: 'carbon', name: 'Use solar power for the day', level: 'very', unit: 'kWh', min: 1, co2: 0.7 },
+  { id: 'c7', cat: 'carbon', name: 'Use solar power for the day', level: 'very', unit: 'kWh', min: 1, co2: 0.73 },
   { id: 'c8', cat: 'carbon', name: 'Install rooftop solar or an LED lighting set', level: 'excellent', unit: 'systems', min: 1, co2: 250, once: true },
   // Water
   { id: 'w1', cat: 'water', name: 'Take a bucket bath or a shorter shower', level: 'basic', unit: 'litres saved', min: 10, water: 1 },
-  { id: 'w2', cat: 'water', name: 'Fix a leaking tap or pipe', level: 'good', unit: 'taps', min: 1, water: 200 },
+  { id: 'w2', cat: 'water', name: 'Fix a leaking tap or pipe', level: 'good', unit: 'taps', min: 1, water: 900 },
   { id: 'w3', cat: 'water', name: 'Reuse washing water for plants or cleaning', level: 'basic', unit: 'litres', min: 10, water: 1 },
   { id: 'w4', cat: 'water', name: 'Collect rainwater', level: 'very', unit: 'litres', min: 20, water: 1 },
   { id: 'w5', cat: 'water', name: 'Turn off the tap while brushing or shaving', level: 'basic', unit: 'times', min: 1, water: 6 },
@@ -39,12 +39,12 @@ GC.DEEDS = [
   { id: 'w7', cat: 'water', name: 'Report and repair a leak at a shared tap', level: 'very', unit: 'leaks', min: 1, water: 500 },
   { id: 'w8', cat: 'water', name: 'Set up rainwater harvesting', level: 'excellent', unit: 'systems', min: 1, water: 5000, once: true },
   // Food
-  { id: 'f1', cat: 'food', name: 'Finish every meal with no leftovers', level: 'basic', unit: 'meals', min: 1, food: 0.3, co2: 0.75 },
-  { id: 'f2', cat: 'food', name: 'Plan meals and buy only what you need', level: 'basic', unit: 'days', min: 1, food: 0.4, co2: 1 },
+  { id: 'f1', cat: 'food', name: 'Finish every meal with no leftovers', level: 'basic', unit: 'meals', min: 1, food: 0.05, co2: 0.12 },
+  { id: 'f2', cat: 'food', name: 'Plan meals and buy only what you need', level: 'basic', unit: 'days', min: 1, food: 0.15, co2: 0.4 },
   { id: 'f3', cat: 'food', name: 'Compost kitchen waste', level: 'good', unit: 'kg', min: 0.5, food: 1, co2: 0.5 },
   { id: 'f4', cat: 'food', name: 'Donate surplus food to an NGO', level: 'very', unit: 'kg', min: 1, food: 1, co2: 2.5 },
   { id: 'f5', cat: 'food', name: 'Eat a plant-based meal', level: 'basic', unit: 'meals', min: 1, co2: 1.5 },
-  { id: 'f6', cat: 'food', name: 'Turn leftovers into a new meal', level: 'good', unit: 'meals', min: 1, food: 0.3, co2: 0.75 },
+  { id: 'f6', cat: 'food', name: 'Turn leftovers into a new meal', level: 'good', unit: 'meals', min: 1, food: 0.25, co2: 0.6 },
   { id: 'f7', cat: 'food', name: 'Organise a food-sharing drive', level: 'excellent', unit: 'drives', min: 1, food: 10, co2: 25 },
   { id: 'f8', cat: 'food', name: 'Start a home or school kitchen garden', level: 'excellent', unit: 'gardens', min: 1, food: 5, co2: 10, once: true },
   // Farm
@@ -81,6 +81,20 @@ GC.LAND_MAX = 5000;          // acres
 GC.TRIPS_PER_DAY = 10;
 GC.KWH_PER_PERSON_WEEK = 150;  GC.KWH_MIN_WEEK = 2;
 GC.LITRES_PER_PERSON_WEEK = 3500; GC.LITRES_MIN_WEEK = 50;
+
+
+/* Where the impact numbers come from. status: 'sourced' = taken from the source shown; 'assumption' = our simple
+   estimate, to be replaced when a better source is found. Shown on the About screen. */
+GC.SOURCES = [
+  { topic: 'Electricity', use: 'CO2 per kWh used or solar kWh: 0.73 kg', status: 'sourced', note: 'Indian grid average, 0.727 kg CO2 per kWh for 2023-24 (CEA, adjusted for renewables). Newer editions are published each year.', src: 'CEA, CO2 Baseline Database for the Indian Power Sector, v20', url: 'https://cea.nic.in/wp-content/uploads/2021/03/User_Guide_Version_20.0.pdf' },
+  { topic: 'Car, bus and metro', use: 'Walking or cycling instead of a car: 0.16 kg CO2 per km. Bus, metro or train instead of a car: 0.12 kg. Carpool: 0.08 kg', status: 'sourced', note: 'Life-cycle emissions per passenger-km in India: petrol car about 162 g, urban bus about 28 to 46 g, metro about 24 g. Carpooling is taken as two people sharing one car.', src: 'ITF-OECD, Life-Cycle Assessment of Passenger Transport: An Indian Case Study', url: 'https://www.itf-oecd.org/sites/default/files/docs/life-cycle-assessment-passenger-transport-india.pdf' },
+  { topic: 'Planting a tree', use: '20 kg CO2 a year', status: 'sourced', note: 'A tree takes up roughly 10 to 40 kg of CO2 a year once established, usually quoted as 20 to 25 kg. Young saplings absorb much less at first.', src: 'EcoTree, How much CO2 does a tree absorb?', url: 'https://ecotree.green/en/how-much-co2-does-a-tree-absorb' },
+  { topic: 'Food waste at home', use: 'About 0.15 kg of food a day per person', status: 'sourced', note: 'Indian households waste about 50 to 55 kg of food per person each year, so about 0.15 kg a day. We count a finished meal as one third of that.', src: 'UNEP Food Waste Index Report 2021 and 2024 (via WRI India)', url: 'https://wri-india.org/node/45084' },
+  { topic: 'Climate cost of wasted food', use: 'About 2.5 kg CO2 for each kg of food wasted or donated', status: 'assumption', note: 'FAO puts food waste at about 4.4 billion tonnes of CO2 a year worldwide, about 8% of all emissions. Our per-kg figure is a simple estimate below that average and will be refined.', src: 'FAO, Food wastage footprint and climate change', url: 'https://www.uncclearn.org/wp-content/uploads/library/a-bb144e.pdf' },
+  { topic: 'Leaking tap', use: '900 litres saved for each tap fixed', status: 'sourced', note: 'A tap dripping once a second wastes more than 3,000 US gallons (about 11,000 litres) a year, roughly 30 litres a day. We count about a month of that.', src: 'US EPA WaterSense, Fix a Leak Week, and the USGS drip calculator', url: 'https://water.usgs.gov/edu/activity-drip.html' },
+  { topic: 'Drip and sprinkler irrigation', use: 'Litres saved per acre (a simple estimate)', status: 'assumption', note: 'ICAR reports an average 32 to 40% water saving from micro-irrigation compared with surface irrigation. The litres per acre we show depend on crop and soil, so they are only rough.', src: 'Rajya Sabha reply citing ICAR, 2 Feb 2024', url: 'https://rsdebate.nic.in/bitstream/123456789/747357/1/PQ_263_02022024_U4_p105_p106.pdf' },
+  { topic: 'Other everyday figures', use: 'Tap off while brushing 6 L, full washing-machine load 40 L, rainwater system 5,000 L, residue not burned 150 kg CO2 an acre, plant-based meal 1.5 kg CO2, rooftop solar or LED set 250 kg CO2', status: 'assumption', note: 'These are our own simple estimates. No source has been matched to them yet.', src: '', url: '' }
+];
 
 GC.VOUCHERS = [
   { id: 'v1', name: 'Participation certificate', cost: 600, level: 'Beginner', desc: 'A certificate for your green habits.' },
@@ -242,7 +256,7 @@ GC.DEVICE_TYPES = [
   { id: 'soil', name: 'Soil moisture sensor', unit: '%', feeds: null, icon: 'sprout' }
 ];
 
-GC.GRID_KG_PER_KWH = 0.7;
+GC.GRID_KG_PER_KWH = 0.73;
 GC.BASELINE_WEEKS = 4;
 GC.DAILY_CAT_CAP = 200;
 GC.DAILY_PENALTY_CAP = 50;

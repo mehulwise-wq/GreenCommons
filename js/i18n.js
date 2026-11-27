@@ -76,7 +76,36 @@
     'No account yet?': 'अभी तक खाता नहीं है?', 'Choose your language': 'अपनी भाषा चुनें'
   };
 
-  const DICT = { en: {}, hi: hi };
+  // Build the dictionary for every language in translations.js. Hindi also keeps the shorter table above.
+  const DICT = { en: {}, hi: Object.assign({}, hi) };
+  (function () {
+    const order = window.GC_LANG_ORDER || [], tr = window.GC_TR || {};
+    order.forEach((c) => { if (!DICT[c]) DICT[c] = {}; });
+    Object.keys(tr).forEach((k) => order.forEach((c, i) => { if (tr[k][i]) DICT[c][k] = tr[k][i]; }));
+  })();
+
+  /* Patterns for text that has numbers or names inside. */
+  const GREET = { hi: 'नमस्ते', kn: 'ನಮಸ್ಕಾರ', mr: 'नमस्कार', bn: 'নমস্কার', gu: 'નમસ્તે' };
+  const UNITS = ['litres saved', 'litres', 'km', 'kg', 'meals', 'loads', 'hours', 'taps', 'trees', 'times', 'days', 'checks', 'drives', 'gardens', 'systems', 'leaks', 'acres'];
+  const unitRe = UNITS.map((u) => u.replace(/ /g, '\\s')).join('|');
+  const RE_UNIT = new RegExp('^([\\d.,]+) (' + unitRe + ')( · .*)?$');
+  const RE_PER = new RegExp('^per (' + unitRe + ') · minimum ([\\d.]+)( · one-time)?$');
+  const RE_PTS = /^([\d.,]+) points$/;
+  const RE_HELLO = /^Hello, (.+)$/;
+  const RE_WEEK = /^\+?([\d.,]+) this week$/;
+  const RE_NEXT = /^Next: (Beginner|Green|Champion) at ([\d.,]+)$/;
+  const RE_TO = /^([\d.,]+) points to (Beginner|Green|Champion)$/;
+  function pattern(code, d, key) {
+    let m;
+    if ((m = RE_WEEK.exec(key)) && d['This week']) return '+' + m[1] + ' ' + d['This week'];
+    if ((m = RE_NEXT.exec(key)) && d['Next']) return d['Next'] + ': ' + d[m[1]] + ' · ' + m[2];
+    if ((m = RE_TO.exec(key)) && d['Points']) return m[1] + ' ' + d['Points'] + ' → ' + d[m[2]];
+    if ((m = RE_HELLO.exec(key)) && GREET[code]) return GREET[code] + ', ' + m[1];
+    if ((m = RE_PTS.exec(key)) && d['Points']) return m[1] + ' ' + d['Points'];
+    if ((m = RE_PER.exec(key)) && d[m[1]]) return d['per'] + ' ' + d[m[1]] + ' · ' + d['minimum'] + ' ' + m[2] + (m[3] ? ' · ' + (d['one-time'] || 'one-time') : '');
+    if ((m = RE_UNIT.exec(key)) && d[m[2]]) return m[1] + ' ' + d[m[2]] + (m[3] || '');
+    return null;
+  }
 
   const I18N = {
     LANGS, WELCOME, SELECT, DICT,
@@ -86,6 +115,13 @@
       const meta = LANGS.find((l) => l.code === this.lang);
       document.documentElement.lang = this.lang;
       document.documentElement.dir = meta && meta.rtl ? 'rtl' : 'ltr';
+      if (this.lang !== 'en' && document.body) applyTree(document.body);
+    },
+    /* Translate one piece of text, or return null when there is no translation. */
+    lookup(text) {
+      const d = DICT[this.lang]; if (!d || this.lang === 'en') return null;
+      const key = text.replace(/\s+/g, ' ').trim(); if (!key) return null;
+      return d[key] || pattern(this.lang, d, key);
     },
     t(key, vars) {
       const d = DICT[this.lang];
@@ -95,6 +131,38 @@
     },
     isTranslated(code) { return code === 'en' || !!DICT[code]; }
   };
+
+  /* Translates text already on the page, and keeps translating as screens change. */
+  const SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, CODE: 1 };
+  const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
+  let busy = false;
+  function doText(n) {
+    const p = n.parentElement; if (!p || SKIP[p.tagName] || p.closest('[data-notr]')) return;
+    const v = n.nodeValue; const r = I18N.lookup(v);
+    if (r && r !== v.trim()) n.nodeValue = v.replace(v.trim(), r);
+  }
+  function doAttrs(el) {
+    ATTRS.forEach((a) => { const v = el.getAttribute && el.getAttribute(a); if (v) { const r = I18N.lookup(v); if (r && r !== v) el.setAttribute(a, r); } });
+  }
+  function applyTree(root) {
+    if (I18N.lang === 'en' || !root) return;
+    busy = true;
+    try {
+      if (root.nodeType === 3) doText(root);
+      else if (root.nodeType === 1) {
+        doAttrs(root);
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) doText(n);
+        root.querySelectorAll('[placeholder],[aria-label],[title],[alt]').forEach(doAttrs);
+      }
+    } finally { busy = false; }
+  }
+  I18N.apply = applyTree;
+  if (typeof MutationObserver !== 'undefined') {
+    new MutationObserver((muts) => {
+      if (busy || I18N.lang === 'en') return;
+      muts.forEach((m) => { if (m.type === 'characterData') applyTree(m.target); else m.addedNodes.forEach((n) => applyTree(n)); });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  }
 
   window.I18N = I18N;
   window.t = (k, v) => I18N.t(k, v);

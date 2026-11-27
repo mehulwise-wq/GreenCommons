@@ -29,7 +29,7 @@
       title: 'Home', tab: 'home',
       html: '<div class="stack"><div><h2 class="heading">' + t('Hello') + ', ' + esc(first(u)) + '</h2></div>' +
         '<div class="card pale score-card" data-go="/credit" role="link" tabindex="0"><div class="row between"><span class="small mid">' + t('Green Credit') + '</span><button class="icon-btn" style="width:36px;height:36px" data-act="score-help" aria-label="How is it calculated?">' + ic('help', 22) + '</button></div>' +
-        '<div class="score-num">' + num(tot.score) + '</div><div class="row between mt"><span class="semi">' + t(lv.name) + '</span><span class="small mid">' + (lv.next ? 'Next: ' + t(lv.next.name) + ' at ' + num(lv.next.min) : 'Top level') + '</span></div><div class="mt">' + GC.ui.bar(lv.progress) + '</div><p class="small mt">' + (gain >= 0 ? '+' : '&minus;') + num(Math.abs(gain)) + ' this week</p></div>' +
+        '<div class="score-num">' + num(tot.score) + '</div><div class="row between mt"><span class="semi">' + t(lv.name) + '</span><span class="small mid">' + (lv.next ? t('Next') + ': ' + t(lv.next.name) + ' · ' + num(lv.next.min) : 'Top level') + '</span></div><div class="mt">' + GC.ui.bar(lv.progress) + '</div><p class="small mt">' + (gain >= 0 ? '+' : '&minus;') + num(Math.abs(gain)) + ' this week</p></div>' +
         '<div class="grid2">' + tiles + '</div>' +
         '<button class="btn block" data-act="open-log">' + t('Log an action') + '</button>' +
         '<div class="card"><div class="small mid">' + t("Today's goal") + '</div><p class="semi">' + esc(goal.text) + '</p>' + (goal.cat ? '<button class="btn small outline mt" data-act="open-log" data-cat="' + goal.cat + '">Log it</button>' : '') + '</div>' +

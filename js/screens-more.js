@@ -288,7 +288,8 @@
     title: 'About', back: '/profile',
     html: '<div class="stack"><div class="center">' + GC.logoSvg(72) + '<h2 class="heading mt">GreenCommons</h2><p class="mid">Version 1.0 (prototype)</p></div>' +
       '<div class="card pale"><p><b>This is a prototype.</b> Sign-up codes, email checks, the shared leaderboard, the fund pool and vouchers are simulated. Your data stays on this phone.</p></div>' +
-      '<div class="card"><div class="semi">How impact figures are estimated</div><p class="small mid mt">Impact numbers are rough estimates built from simple per-action factors. Carbon from electricity uses about ' + GC.GRID_KG_PER_KWH + ' kg of CO2 per kWh. Everyday comparisons use ' + GC.EVERYDAY.bucketL + ' litres per bucket and about ' + GC.EVERYDAY.mealKg + ' kg of food per meal. Figures are approximate and have not been audited. Sources will be listed here before a public release.</p></div>' +
+      '<div class="card"><div class="semi">How impact figures are estimated</div><p class="small mid mt">Impact numbers are rough estimates built from simple per-action factors. They are not audited. Each line below says whether it comes from a source or is our own assumption, so you can check it.</p>' +
+        GC.SOURCES.map((x) => '<div class="mt"><div class="row between"><span class="semi">' + esc(x.topic) + '</span><span class="tag ' + (x.status === 'sourced' ? '' : 'grey') + '">' + (x.status === 'sourced' ? 'Sourced' : 'Assumption') + '</span></div><p class="small" style="margin:4px 0">' + esc(x.use) + '</p><p class="small mid" style="margin:0">' + esc(x.note) + '</p>' + (x.url ? '<p class="small" style="margin:4px 0"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.src) + '</a></p>' : '') + '</div>').join('') + '</div>' +
       '<p class="demo-note">This is a habit score, not a financial credit score.</p></div>'
   });
 
